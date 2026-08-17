@@ -1,6 +1,6 @@
 # 牛来（Niulai）
 
-牛来是一个独立的 DSH Web 主题皮肤。它以奶油色界面、田野绿和低不透明度的背景图营造安静、易读的工作区；所有 DSH 界面颜色通过 `--dsw-alias-*` token 接入。
+牛来是一个独立的 DSH Web 背景皮肤。它保留 DSH 原生界面颜色，只在工作区叠加低不透明度背景图，并提供可拖动的透明角色挂件。
 
 ## 特性
 
@@ -34,7 +34,7 @@ pnpm pack
 随后在任意目录的 PowerShell 中安装：
 
 ```powershell
-dsh plugin --profile web add "D:\deepseek-agent\dsh-niulai\dsh-niulai-0.1.4.tgz"
+dsh plugin --profile web add "D:\deepseek-agent\dsh-niulai\dsh-niulai-0.1.5.tgz"
 dsh web
 ```
 

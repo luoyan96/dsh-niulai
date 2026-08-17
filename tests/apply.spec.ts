@@ -82,7 +82,7 @@ describe('Niulai skin', () => {
     expect(document.querySelectorAll('button[data-niulai-theme]')).toHaveLength(3)
     document.querySelector<HTMLButtonElement>('[data-niulai-theme="niulai"]')?.click()
     expect(document.body.style.getPropertyValue('--niulai-art')).toContain('data:image/png;base64')
-    expect(document.querySelector<HTMLImageElement>('[data-niulai-companion] img')?.src).toContain('data:image/jpeg;base64')
+    expect(document.querySelector<HTMLImageElement>('[data-niulai-companion] img')?.src).toContain('data:image/png;base64')
     expect(window.localStorage.getItem('dsh-niulai-theme')).toBe('niulai')
     dispose(); const second = applySkin()
     expect(document.body.dataset.niulaiTheme).toBe('niulai')

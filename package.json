@@ -1,6 +1,6 @@
 {
   "name": "dsh-niulai",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Niulai is a translucent pasture skin for DeepSeek Harness Web.",
   "type": "module",
   "main": "lib/index.mjs",
