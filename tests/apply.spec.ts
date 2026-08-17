@@ -82,11 +82,38 @@ describe('Niulai skin', () => {
     expect(document.querySelectorAll('button[data-niulai-theme]')).toHaveLength(3)
     document.querySelector<HTMLButtonElement>('[data-niulai-theme="niulai"]')?.click()
     expect(document.body.style.getPropertyValue('--niulai-art')).toContain('data:image/png;base64')
-    expect(document.querySelector<HTMLImageElement>('[data-niulai-companion]')?.src).toContain('data:image/jpeg;base64')
+    expect(document.querySelector<HTMLImageElement>('[data-niulai-companion] img')?.src).toContain('data:image/jpeg;base64')
     expect(window.localStorage.getItem('dsh-niulai-theme')).toBe('niulai')
     dispose(); const second = applySkin()
     expect(document.body.dataset.niulaiTheme).toBe('niulai')
     second()
+  })
+
+  it('floats beside the composer and remembers a dragged companion position', async () => {
+    const textarea = document.querySelector<HTMLTextAreaElement>('textarea')
+    if (textarea !== null) textarea.getBoundingClientRect = () => ({ x: 120, y: 300, top: 300, right: 720, bottom: 390, left: 120, width: 600, height: 90, toJSON: () => ({}) })
+    const dispose = applySkin(); await flush()
+    const companion = document.querySelector<HTMLButtonElement>('[data-niulai-companion]')
+    if (companion === null) throw new Error('missing companion')
+    companion.setPointerCapture = vi.fn(); companion.hasPointerCapture = vi.fn(() => true); companion.releasePointerCapture = vi.fn()
+    companion.getBoundingClientRect = () => {
+      const left = Number.parseInt(companion.style.left || '738', 10)
+      const top = Number.parseInt(companion.style.top || '310', 10)
+      return { x: left, y: top, top, right: left + 74, bottom: top + 74, left, width: 74, height: 74, toJSON: () => ({}) }
+    }
+    expect(companion.hidden).toBe(false)
+    const pointer = (type: string, clientX: number, clientY: number) => {
+      const event = new MouseEvent(type, { bubbles: true, button: 0, clientX, clientY })
+      Object.defineProperty(event, 'pointerId', { value: 1 })
+      return event
+    }
+    companion.dispatchEvent(pointer('pointerdown', 760, 340))
+    companion.dispatchEvent(pointer('pointermove', 820, 420))
+    companion.dispatchEvent(pointer('pointerup', 820, 420))
+    expect(companion.style.left).toBe('798px')
+    expect(companion.style.top).toBe('396px')
+    expect(window.localStorage.getItem('dsh-niulai-companion-position')).toContain('798')
+    dispose()
   })
 
   it('hides background decoration for menus, settings, and narrow screens', async () => {

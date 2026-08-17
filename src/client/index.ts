@@ -8,6 +8,7 @@ type ModuleSystem = { import(id: string): Promise<unknown> }
 declare global { var __DSH_MODULES__: ModuleSystem | undefined }
 
 const STORAGE_KEY = 'dsh-niulai-theme'
+const COMPANION_STORAGE_KEY = 'dsh-niulai-companion-position'
 const BETTER_SIDEBAR_ID = 'dsh-better-sidebar'
 
 function themeFromStorage(): ThemeId {
@@ -47,7 +48,11 @@ const THEMES: ReadonlyArray<{ id: ThemeId, label: string }> = [
 ]
 
 function mountSettingsControl(onTheme: (theme: ThemeId) => void): HTMLElement | undefined {
-  const target = document.querySelector<HTMLElement>('[role="dialog"] [data-settings-appearance], [role="dialog"]')
+  const dialog = document.querySelector<HTMLElement>('[role="dialog"]')
+  if (dialog === null) return undefined
+  const appearance = Array.from(dialog.querySelectorAll<HTMLElement>('div, span, h2, h3, strong'))
+    .find(element => element.textContent?.trim() === '外观')
+  const target = dialog.querySelector<HTMLElement>('[data-settings-appearance]') ?? appearance?.parentElement?.parentElement ?? dialog
   if (target === null) return undefined
   const block = document.createElement('section')
   block.className = css.settingsBlock ?? ''
@@ -61,7 +66,13 @@ function mountSettingsControl(onTheme: (theme: ThemeId) => void): HTMLElement | 
     button.type = 'button'
     button.className = css.themeButton ?? ''
     button.dataset.niulaiTheme = id
-    button.textContent = text
+    const preview = document.createElement('img')
+    preview.src = themeAssets[id].background
+    preview.alt = ''
+    preview.setAttribute('aria-hidden', 'true')
+    const name = document.createElement('span')
+    name.textContent = text
+    button.append(preview, name)
     button.addEventListener('click', () => onTheme(id))
     block.append(button)
   }
@@ -74,6 +85,16 @@ function findComposer(): DOMRect | undefined {
     .map(element => element.getBoundingClientRect())
     .filter(rect => rect.width >= 320 && rect.height >= 40)
     .sort((left, right) => right.width - left.width)[0]
+}
+
+function readCompanionPosition(): { left: number, top: number } | undefined {
+  try {
+    const value = JSON.parse(window.localStorage.getItem(COMPANION_STORAGE_KEY) ?? '{}') as { left?: unknown, top?: unknown }
+    return typeof value.left === 'number' && typeof value.top === 'number' ? { left: value.left, top: value.top } : undefined
+  } catch { return undefined }
+}
+function storeCompanionPosition(left: number, top: number): void {
+  try { window.localStorage.setItem(COMPANION_STORAGE_KEY, JSON.stringify({ left, top })) } catch {}
 }
 
 export const inject = ['slots', 'locale', 'connection', 'settingsScope', 'remote', 'sessions', 'workspaces']
@@ -92,29 +113,64 @@ export function apply(ctx: Context): void {
   let theme = themeFromStorage()
   let control: HTMLElement | undefined
   let companionFrame: number | undefined
-  const companion = document.createElement('img')
+  const companion = document.createElement('button')
+  companion.type = 'button'
   companion.className = css.companion ?? ''
   companion.dataset.niulaiCompanion = ''
-  companion.alt = ''
-  companion.setAttribute('aria-hidden', 'true')
+  companion.setAttribute('aria-label', '拖动牛来宠物')
+  const companionImage = document.createElement('img')
+  companionImage.alt = ''
+  companionImage.setAttribute('aria-hidden', 'true')
+  companion.append(companionImage)
   body.append(companion)
+  let dragStart: { x: number, y: number, left: number, top: number } | undefined
+
+  const moveCompanion = (left: number, top: number): void => {
+    const width = companion.getBoundingClientRect().width || 96
+    const safeLeft = Math.round(Math.max(12, Math.min(window.innerWidth - width - 12, left)))
+    const safeTop = Math.round(Math.max(52, Math.min(window.innerHeight - width - 18, top)))
+    companion.style.left = `${safeLeft}px`; companion.style.top = `${safeTop}px`
+  }
+  const onPointerDown = (event: PointerEvent): void => {
+    if (event.button !== 0) return
+    const rect = companion.getBoundingClientRect()
+    dragStart = { x: event.clientX, y: event.clientY, left: rect.left, top: rect.top }
+    companion.setPointerCapture(event.pointerId)
+  }
+  const onPointerMove = (event: PointerEvent): void => {
+    if (dragStart === undefined) return
+    moveCompanion(dragStart.left + event.clientX - dragStart.x, dragStart.top + event.clientY - dragStart.y)
+  }
+  const onPointerUp = (event: PointerEvent): void => {
+    if (dragStart === undefined) return
+    const rect = companion.getBoundingClientRect()
+    storeCompanionPosition(rect.left, rect.top)
+    dragStart = undefined
+    if (companion.hasPointerCapture(event.pointerId)) companion.releasePointerCapture(event.pointerId)
+  }
+  companion.addEventListener('pointerdown', onPointerDown)
+  companion.addEventListener('pointermove', onPointerMove)
+  companion.addEventListener('pointerup', onPointerUp)
 
   const positionCompanion = (): void => {
     const composer = findComposer()
     const blocked = body.hasAttribute('data-niulai-overlay-open') || body.hasAttribute('data-niulai-settings-open') || body.hasAttribute('data-niulai-narrow')
     if (composer === undefined || blocked) { companion.hidden = true; return }
-    const width = Math.min(112, Math.max(76, composer.width * .14))
+    const width = Math.min(108, Math.max(74, composer.width * .12))
     companion.hidden = false
     companion.style.width = `${Math.round(width)}px`
-    companion.style.left = `${Math.round(Math.min(window.innerWidth - width - 16, composer.right - width - 18))}px`
-    companion.style.top = `${Math.round(Math.min(window.innerHeight - width - 18, composer.bottom + 10))}px`
+    const stored = readCompanionPosition()
+    if (stored !== undefined) { moveCompanion(stored.left, stored.top); return }
+    if (composer.right + width + 24 <= window.innerWidth) { moveCompanion(composer.right + 18, composer.bottom - width); return }
+    if (composer.left - width - 24 >= 0) { moveCompanion(composer.left - width - 18, composer.bottom - width); return }
+    companion.hidden = true
   }
 
   const update = (next: ThemeId): void => {
     theme = next
     body.dataset.niulaiTheme = theme
     body.style.setProperty('--niulai-art', `url("${themeAssets[theme].background}")`)
-    companion.src = themeAssets[theme].companion
+    companionImage.src = themeAssets[theme].companion
     storeTheme(theme)
     renderedTitle = `牛来 · ${THEMES.find(item => item.id === theme)?.label ?? '晴野'} · DeepSeek Harness`
     document.title = renderedTitle
@@ -141,7 +197,7 @@ export function apply(ctx: Context): void {
   const stopClients = detectSidebarWithoutActivation(ctx)
 
   ctx.effect(() => () => {
-    stopClients(); observer.disconnect(); window.removeEventListener('resize', onResize); if (companionFrame !== undefined) window.cancelAnimationFrame(companionFrame); control?.remove(); companion.remove()
+    stopClients(); observer.disconnect(); window.removeEventListener('resize', onResize); if (companionFrame !== undefined) window.cancelAnimationFrame(companionFrame); control?.remove(); companion.removeEventListener('pointerdown', onPointerDown); companion.removeEventListener('pointermove', onPointerMove); companion.removeEventListener('pointerup', onPointerUp); companion.remove()
     const restore = (name: string, value: string | null) => value === null ? body.removeAttribute(name) : body.setAttribute(name, value)
     restore('data-dsh-niulai', original.skin); restore('data-niulai-theme', original.theme); restore('data-niulai-better-sidebar', original.sidebar)
     restore('data-niulai-overlay-open', original.overlay); restore('data-niulai-settings-open', original.settings); restore('data-niulai-narrow', original.narrow)
