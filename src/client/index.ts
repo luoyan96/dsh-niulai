@@ -1,8 +1,8 @@
 import type { Context } from '@deepseek-ai/cordis'
 import css from './niulai.module.css'
-import { meadowBackground } from './generated/assets.ts'
+import { themeAssets } from './generated/assets.ts'
 
-type ThemeId = 'pasture' | 'dusk'
+type ThemeId = keyof typeof themeAssets
 type ModuleSystem = { import(id: string): Promise<unknown> }
 type Feature = { apply?(ctx: Context): void }
 
@@ -14,7 +14,10 @@ const OPTIONAL_CLIENTS = ['@linxin666/dsh-client-ui-web-ui-settings', '@linxin66
 const LEGACY_CLIENTS = ['@linxin666/dsh-client-ui-aionui-panel', '@linxin666/dsh-client-ui-git-graph']
 
 function themeFromStorage(): ThemeId {
-  try { return window.localStorage.getItem(STORAGE_KEY) === 'dusk' ? 'dusk' : 'pasture' } catch { return 'pasture' }
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY)
+    return stored === 'niulai' || stored === 'niulaima' ? stored : 'huabao'
+  } catch { return 'huabao' }
 }
 function storeTheme(theme: ThemeId): void { try { window.localStorage.setItem(STORAGE_KEY, theme) } catch {} }
 
@@ -47,6 +50,12 @@ function hostOverlayIsOpen(): boolean {
   return Array.from(document.querySelectorAll<HTMLElement>('[role="dialog"], [role="menu"], [role="listbox"]')).some(node => !node.hidden && window.getComputedStyle(node).display !== 'none')
 }
 
+const THEMES: ReadonlyArray<{ id: ThemeId, label: string }> = [
+  { id: 'huabao', label: '花豹原野' },
+  { id: 'niulai', label: '牛来晴野' },
+  { id: 'niulaima', label: '牛来暮野' },
+]
+
 function mountSettingsControl(onTheme: (theme: ThemeId) => void): HTMLElement | undefined {
   const target = document.querySelector<HTMLElement>('[role="dialog"] [data-settings-appearance], [role="dialog"]')
   if (target === null) return undefined
@@ -57,7 +66,7 @@ function mountSettingsControl(onTheme: (theme: ThemeId) => void): HTMLElement | 
   label.className = css.settingsLabel ?? ''
   label.textContent = '牛来主题'
   block.append(label)
-  for (const [id, text] of [['pasture', '晴野'], ['dusk', '暮野']] as const) {
+  for (const { id, label: text } of THEMES) {
     const button = document.createElement('button')
     button.type = 'button'
     button.className = css.themeButton ?? ''
@@ -68,6 +77,13 @@ function mountSettingsControl(onTheme: (theme: ThemeId) => void): HTMLElement | 
   }
   target.append(block)
   return block
+}
+
+function findComposer(): DOMRect | undefined {
+  return Array.from(document.querySelectorAll('textarea'))
+    .map(element => element.getBoundingClientRect())
+    .filter(rect => rect.width >= 320 && rect.height >= 40)
+    .sort((left, right) => right.width - left.width)[0]
 }
 
 export const inject = ['slots', 'locale', 'connection', 'settingsScope', 'remote', 'sessions', 'workspaces']
@@ -85,17 +101,37 @@ export function apply(ctx: Context): void {
   let renderedTitle = initialTitle
   let theme = themeFromStorage()
   let control: HTMLElement | undefined
+  let companionFrame: number | undefined
+  const companion = document.createElement('img')
+  companion.className = css.companion ?? ''
+  companion.dataset.niulaiCompanion = ''
+  companion.alt = ''
+  companion.setAttribute('aria-hidden', 'true')
+  body.append(companion)
+
+  const positionCompanion = (): void => {
+    const composer = findComposer()
+    const blocked = body.hasAttribute('data-niulai-overlay-open') || body.hasAttribute('data-niulai-settings-open') || body.hasAttribute('data-niulai-narrow')
+    if (composer === undefined || blocked) { companion.hidden = true; return }
+    const width = Math.min(112, Math.max(76, composer.width * .14))
+    companion.hidden = false
+    companion.style.width = `${Math.round(width)}px`
+    companion.style.left = `${Math.round(Math.min(window.innerWidth - width - 16, composer.right - width - 18))}px`
+    companion.style.top = `${Math.round(Math.min(window.innerHeight - width - 18, composer.bottom + 10))}px`
+  }
 
   const update = (next: ThemeId): void => {
     theme = next
     body.dataset.niulaiTheme = theme
+    body.style.setProperty('--niulai-art', `url("${themeAssets[theme].background}")`)
+    companion.src = themeAssets[theme].companion
     storeTheme(theme)
-    renderedTitle = `牛来 · ${theme === 'pasture' ? '晴野' : '暮野'} · DeepSeek Harness`
+    renderedTitle = `牛来 · ${THEMES.find(item => item.id === theme)?.label ?? '晴野'} · DeepSeek Harness`
     document.title = renderedTitle
     control?.querySelectorAll<HTMLButtonElement>('[data-niulai-theme]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.niulaiTheme === theme)))
+    positionCompanion()
   }
   body.dataset.dshNiulai = ''
-  body.style.setProperty('--niulai-art', `url("${meadowBackground}")`)
   update(theme)
   const refreshSafety = (): void => {
     const settingsOpen = document.querySelector('[role="dialog"]') !== null
@@ -104,6 +140,8 @@ export function apply(ctx: Context): void {
     body.toggleAttribute('data-niulai-narrow', window.innerWidth < 860)
     if (settingsOpen && control === undefined) { control = mountSettingsControl(update); update(theme) }
     if (!settingsOpen && control !== undefined) { control.remove(); control = undefined }
+    if (companionFrame !== undefined) window.cancelAnimationFrame(companionFrame)
+    companionFrame = window.requestAnimationFrame(() => { companionFrame = undefined; positionCompanion() })
   }
   const observer = new MutationObserver(refreshSafety)
   observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'aria-expanded'] })
@@ -113,7 +151,7 @@ export function apply(ctx: Context): void {
   const stopClients = activateOptionalClients(ctx)
 
   ctx.effect(() => () => {
-    stopClients(); observer.disconnect(); window.removeEventListener('resize', onResize); control?.remove()
+    stopClients(); observer.disconnect(); window.removeEventListener('resize', onResize); if (companionFrame !== undefined) window.cancelAnimationFrame(companionFrame); control?.remove(); companion.remove()
     const restore = (name: string, value: string | null) => value === null ? body.removeAttribute(name) : body.setAttribute(name, value)
     restore('data-dsh-niulai', original.skin); restore('data-niulai-theme', original.theme); restore('data-niulai-better-sidebar', original.sidebar)
     restore('data-niulai-overlay-open', original.overlay); restore('data-niulai-settings-open', original.settings); restore('data-niulai-narrow', original.narrow)

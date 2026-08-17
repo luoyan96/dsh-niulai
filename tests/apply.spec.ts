@@ -54,6 +54,7 @@ describe('Niulai skin', () => {
     expect(document.body.hasAttribute('data-dsh-niulai')).toBe(false)
     expect(document.body.style.getPropertyValue('--niulai-art')).toBe('')
     expect(document.querySelector('[data-niulai-control]')).toBeNull()
+    expect(document.querySelector('[data-niulai-companion]')).toBeNull()
     dialog.remove(); await Promise.resolve()
     expect(document.body.hasAttribute('data-niulai-settings-open')).toBe(false)
   })
@@ -68,13 +69,18 @@ describe('Niulai skin', () => {
     expect(applied).not.toHaveBeenCalled()
   })
 
-  it('persists a settings theme choice and restores it on reapply', async () => {
+  it('uses every same-named background and companion pair, then persists the choice', async () => {
     const dialog = document.createElement('div'); dialog.setAttribute('role', 'dialog'); document.body.append(dialog)
+    const textarea = document.querySelector<HTMLTextAreaElement>('textarea')
+    if (textarea !== null) textarea.getBoundingClientRect = () => ({ x: 100, y: 300, top: 300, right: 760, bottom: 390, left: 100, width: 660, height: 90, toJSON: () => ({}) })
     const dispose = applySkin(); await Promise.resolve()
-    document.querySelector<HTMLButtonElement>('[data-niulai-theme="dusk"]')?.click()
-    expect(window.localStorage.getItem('dsh-niulai-theme')).toBe('dusk')
+    expect(document.querySelectorAll('button[data-niulai-theme]')).toHaveLength(3)
+    document.querySelector<HTMLButtonElement>('[data-niulai-theme="niulai"]')?.click()
+    expect(document.body.style.getPropertyValue('--niulai-art')).toContain('data:image/png;base64')
+    expect(document.querySelector<HTMLImageElement>('[data-niulai-companion]')?.src).toContain('data:image/jpeg;base64')
+    expect(window.localStorage.getItem('dsh-niulai-theme')).toBe('niulai')
     dispose(); const second = applySkin()
-    expect(document.body.dataset.niulaiTheme).toBe('dusk')
+    expect(document.body.dataset.niulaiTheme).toBe('niulai')
     second()
   })
 

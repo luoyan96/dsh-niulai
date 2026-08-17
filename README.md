@@ -6,9 +6,9 @@
 
 - 独立包名、Cordis wiring：`dsh-niulai` / `ui-skin-niulai`
 - 独立存储键：`dsh-niulai-theme`
-- 两个内建配色：`pasture`（默认）与 `dusk`
+- 三套严格配对的主题：`huabao`（默认）、`niulai`、`niulaima`；每套均使用同名 PNG 背景与 `-renwu.jpg` 宠物。
 - 已安装 `dsh-better-sidebar` 时不加载旧 Aion 文件面板及旧 Git 图谱客户端
-- 主题仅添加一个不可交互的低层背景装饰；设置、菜单、输入区、终端和窄屏时会自动避让
+- 背景和宠物都不可交互；宠物仅在对话输入框下方出现，设置、菜单、终端/无输入框和窄屏时自动避让
 - 完整 disposer：恢复属性、样式、标题、DOM、监听器、observer 和 timer
 
 ## 开发
