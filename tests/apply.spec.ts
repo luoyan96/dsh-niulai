@@ -7,10 +7,12 @@ const { apply } = await import('../src/client/index.ts')
 
 type Disposer = () => void
 const flush = () => new Promise<void>(resolve => window.setTimeout(resolve, 0))
+const activeDisposers: Disposer[] = []
 function applySkin(): Disposer {
   let dispose: Disposer | undefined
   apply({ effect(factory: () => Disposer) { dispose = factory() } } as never)
   if (dispose === undefined) throw new Error('missing disposer')
+  activeDisposers.push(dispose)
   return dispose
 }
 
@@ -21,27 +23,30 @@ describe('Niulai skin', () => {
     document.body.removeAttribute('data-niulai-better-sidebar'); document.body.innerHTML = '<main id="root"><textarea></textarea></main>'
     vi.unstubAllGlobals()
   })
-  afterEach(() => vi.unstubAllGlobals())
+  afterEach(() => {
+    while (activeDisposers.length > 0) activeDisposers.pop()?.()
+    vi.unstubAllGlobals()
+  })
 
-  it('uses Better Sidebar without loading legacy panels', async () => {
-    const applied: string[] = []
-    vi.stubGlobal('__DSH_MODULES__', { import: vi.fn(async (id: string) => ({ apply: () => applied.push(id) })) })
-    const dispose = applySkin(); await flush()
+  it('detects Better Sidebar without loading legacy panels', async () => {
+    const modules = { import: vi.fn(async () => ({})) }
+    vi.stubGlobal('__DSH_MODULES__', modules)
+    const dispose = applySkin(); await flush(); await flush()
     expect(document.body.hasAttribute('data-niulai-better-sidebar')).toBe(true)
-    expect(applied).not.toContain('@linxin666/dsh-client-ui-aionui-panel')
-    expect(applied).not.toContain('@linxin666/dsh-client-ui-git-graph')
+    expect(modules.import).toHaveBeenCalledTimes(1)
+    expect(modules.import).toHaveBeenCalledWith('dsh-better-sidebar')
     dispose()
   })
 
-  it('falls back to legacy panels when Better Sidebar is absent', async () => {
-    const applied: string[] = []
-    vi.stubGlobal('__DSH_MODULES__', { import: vi.fn(async (id: string) => {
+  it('uses the native UI as a safe fallback when Better Sidebar is absent', async () => {
+    const modules = { import: vi.fn(async (id: string) => {
       if (id === 'dsh-better-sidebar') throw new Error('not installed')
-      return { apply: () => applied.push(id) }
-    }) })
-    const dispose = applySkin(); await flush()
-    expect(applied).toContain('@linxin666/dsh-client-ui-aionui-panel')
-    expect(applied).toContain('@linxin666/dsh-client-ui-git-graph')
+      return {}
+    }) }
+    vi.stubGlobal('__DSH_MODULES__', modules)
+    const dispose = applySkin(); await flush(); await flush()
+    expect(document.body.hasAttribute('data-niulai-better-sidebar')).toBe(false)
+    expect(modules.import).toHaveBeenCalledTimes(1)
     dispose()
   })
 

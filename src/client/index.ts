@@ -4,14 +4,11 @@ import { themeAssets } from './generated/assets.ts'
 
 type ThemeId = keyof typeof themeAssets
 type ModuleSystem = { import(id: string): Promise<unknown> }
-type Feature = { apply?(ctx: Context): void }
 
 declare global { var __DSH_MODULES__: ModuleSystem | undefined }
 
 const STORAGE_KEY = 'dsh-niulai-theme'
 const BETTER_SIDEBAR_ID = 'dsh-better-sidebar'
-const OPTIONAL_CLIENTS = ['@linxin666/dsh-client-ui-web-ui-settings', '@linxin666/dsh-client-ui-task-board', '@linxin666/dsh-live-stats']
-const LEGACY_CLIENTS = ['@linxin666/dsh-client-ui-aionui-panel', '@linxin666/dsh-client-ui-git-graph']
 
 function themeFromStorage(): ThemeId {
   try {
@@ -28,21 +25,14 @@ async function detectBetterSidebar(ctx: Context, modules: ModuleSystem): Promise
   try { await modules.import(BETTER_SIDEBAR_ID); return true } catch { return false }
 }
 
-function activateOptionalClients(ctx: Context): () => void {
+function detectSidebarWithoutActivation(ctx: Context): () => void {
   const modules = globalThis.__DSH_MODULES__
   if (modules === undefined) return () => {}
   let disposed = false
   void detectBetterSidebar(ctx, modules).then(async enabled => {
     if (disposed) return
     document.body.toggleAttribute('data-niulai-better-sidebar', enabled)
-    const clients = enabled ? OPTIONAL_CLIENTS : [...OPTIONAL_CLIENTS, ...LEGACY_CLIENTS]
-    const loaded = await Promise.all(clients.map(id => modules.import(id)))
-    if (disposed) return
-    for (const module of loaded) {
-      if (disposed) return
-      ;(module as Feature).apply?.(ctx)
-    }
-  }).catch(() => { /* Optional modules must never prevent the theme from applying. */ })
+  }).catch(() => { /* The host UI remains usable when no sidebar extension exists. */ })
   return () => { disposed = true }
 }
 
@@ -148,7 +138,7 @@ export function apply(ctx: Context): void {
   const onResize = () => refreshSafety()
   window.addEventListener('resize', onResize)
   refreshSafety()
-  const stopClients = activateOptionalClients(ctx)
+  const stopClients = detectSidebarWithoutActivation(ctx)
 
   ctx.effect(() => () => {
     stopClients(); observer.disconnect(); window.removeEventListener('resize', onResize); if (companionFrame !== undefined) window.cancelAnimationFrame(companionFrame); control?.remove(); companion.remove()
