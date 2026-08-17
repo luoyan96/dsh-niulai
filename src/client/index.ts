@@ -83,7 +83,9 @@ function mountSettingsControl(onTheme: (theme: ThemeId) => void): HTMLElement | 
 function findComposer(): DOMRect | undefined {
   return Array.from(document.querySelectorAll('textarea'))
     .map(element => element.getBoundingClientRect())
-    .filter(rect => rect.width >= 320 && rect.height >= 40)
+    // DSH Web's empty composer can be only 28px high; use its width plus a
+    // conservative 24px height floor so the companion is not hidden at rest.
+    .filter(rect => rect.width >= 320 && rect.height >= 24)
     .sort((left, right) => right.width - left.width)[0]
 }
 

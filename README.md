@@ -34,7 +34,7 @@ pnpm pack
 随后在任意目录的 PowerShell 中安装：
 
 ```powershell
-dsh plugin --profile web add "D:\deepseek-agent\dsh-niulai\dsh-niulai-0.1.3.tgz"
+dsh plugin --profile web add "D:\deepseek-agent\dsh-niulai\dsh-niulai-0.1.4.tgz"
 dsh web
 ```
 

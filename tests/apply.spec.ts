@@ -91,7 +91,7 @@ describe('Niulai skin', () => {
 
   it('floats beside the composer and remembers a dragged companion position', async () => {
     const textarea = document.querySelector<HTMLTextAreaElement>('textarea')
-    if (textarea !== null) textarea.getBoundingClientRect = () => ({ x: 120, y: 300, top: 300, right: 720, bottom: 390, left: 120, width: 600, height: 90, toJSON: () => ({}) })
+    if (textarea !== null) textarea.getBoundingClientRect = () => ({ x: 120, y: 300, top: 300, right: 720, bottom: 328, left: 120, width: 600, height: 28, toJSON: () => ({}) })
     const dispose = applySkin(); await flush()
     const companion = document.querySelector<HTMLButtonElement>('[data-niulai-companion]')
     if (companion === null) throw new Error('missing companion')
@@ -111,7 +111,7 @@ describe('Niulai skin', () => {
     companion.dispatchEvent(pointer('pointermove', 820, 420))
     companion.dispatchEvent(pointer('pointerup', 820, 420))
     expect(companion.style.left).toBe('798px')
-    expect(companion.style.top).toBe('396px')
+    expect(companion.style.top).toBe('334px')
     expect(window.localStorage.getItem('dsh-niulai-companion-position')).toContain('798')
     dispose()
   })
