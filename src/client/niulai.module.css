@@ -1,0 +1,91 @@
+body[data-dsh-niulai] {
+  --niulai-ink: #273d2c;
+  --niulai-muted: #607462;
+  --niulai-canvas: #eff4e8;
+  --niulai-surface: #fbfdf7;
+  --niulai-raised: #f5f8ee;
+  --niulai-border: #c9d7c4;
+  --niulai-active: #dcebd6;
+  --niulai-accent: #4d7a49;
+  --niulai-accent-hover: #3d6739;
+  --niulai-code: #edf3e9;
+  --dsw-alias-bg-base: var(--niulai-canvas);
+  --dsw-alias-bg-layer-1: var(--niulai-surface);
+  --dsw-alias-bg-layer-2: var(--niulai-raised);
+  --dsw-alias-bg-layer-3: var(--niulai-raised);
+  --dsw-alias-bg-overlay: var(--niulai-surface);
+  --dsw-alias-bg-module-platform: var(--niulai-raised);
+  --dsw-alias-bg-multi-select: var(--niulai-active);
+  --dsw-alias-border-l1: color-mix(in srgb, var(--niulai-border) 60%, transparent);
+  --dsw-alias-border-l2: var(--niulai-border);
+  --dsw-alias-border-l3: var(--niulai-border);
+  --dsw-alias-brand-primary: var(--niulai-accent);
+  --dsw-alias-brand-primary-invert: #ffffff;
+  --dsw-alias-brand-text: var(--niulai-accent-hover);
+  --dsw-alias-button-primary-fill: var(--niulai-accent);
+  --dsw-alias-button-primary-hover: var(--niulai-accent-hover);
+  --dsw-alias-button-elevated-fill: var(--niulai-surface);
+  --dsw-alias-button-floating-fill: var(--niulai-surface);
+  --dsw-alias-interactive-bg-active: var(--niulai-active);
+  --dsw-alias-interactive-bg-hover: color-mix(in srgb, var(--niulai-active) 62%, transparent);
+  --dsw-alias-label-primary: var(--niulai-ink);
+  --dsw-alias-label-secondary: var(--niulai-muted);
+  --dsw-alias-label-tertiary: color-mix(in srgb, var(--niulai-muted) 74%, transparent);
+  --dsw-alias-markdown-code-block: var(--niulai-code);
+  --dsw-alias-markdown-inline-code: var(--niulai-code);
+  --dsw-alias-scrollbar-bg-l1: var(--niulai-border);
+  --dsw-alias-scrollbar-hover-l1: var(--niulai-accent);
+  --dsw-specific-input-major: color-mix(in srgb, var(--niulai-surface) 88%, transparent);
+  --dsw-specific-menu: var(--niulai-surface);
+  --dsw-specific-selector: var(--niulai-surface);
+  --dsw-specific-sidebar-fill: color-mix(in srgb, var(--niulai-raised) 86%, transparent);
+  color: var(--niulai-ink);
+  background-color: var(--niulai-canvas);
+}
+
+body[data-dsh-niulai][data-niulai-theme="dusk"] {
+  --niulai-ink: #e9efe2;
+  --niulai-muted: #bdcbb7;
+  --niulai-canvas: #19251d;
+  --niulai-surface: #223326;
+  --niulai-raised: #2a3b2d;
+  --niulai-border: #4c664e;
+  --niulai-active: #38553a;
+  --niulai-accent: #9bc16a;
+  --niulai-accent-hover: #b0d57d;
+  --niulai-code: #1d2d21;
+  color-scheme: dark;
+}
+
+/* Background art is intentionally below the app and cannot receive input. */
+body[data-dsh-niulai]::before {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background: center / min(820px, 72vw) auto no-repeat var(--niulai-art);
+  opacity: .075;
+  filter: saturate(.65) contrast(.9);
+}
+
+body[data-dsh-niulai] #root { position: relative; z-index: 1; }
+body[data-dsh-niulai][data-niulai-overlay-open]::before,
+body[data-dsh-niulai][data-niulai-settings-open]::before,
+body[data-dsh-niulai][data-niulai-narrow]::before { opacity: 0; }
+
+.settingsBlock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--niulai-border);
+  color: var(--niulai-ink);
+}
+.settingsLabel { margin-right: auto; font: 600 13px/1.3 system-ui, sans-serif; }
+.themeButton { padding: 7px 10px; color: var(--niulai-ink); border: 1px solid var(--niulai-border); border-radius: 8px; background: var(--niulai-surface); font: 600 12px/1 system-ui, sans-serif; cursor: pointer; }
+.themeButton[aria-pressed="true"] { color: #fff; border-color: var(--niulai-accent); background: var(--niulai-accent); }
+
+@media (max-width: 860px) { body[data-dsh-niulai]::before { display: none; } }

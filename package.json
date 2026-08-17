@@ -1,0 +1,66 @@
+{
+  "name": "dsh-niulai",
+  "version": "0.1.0",
+  "description": "Niulai is a translucent pasture skin for DeepSeek Harness Web.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ],
+      "platform": "web"
+    }
+  },
+  "license": "MIT",
+  "engines": { "node": "^22.19.0 || >=24" },
+  "packageManager": "pnpm@11.21.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luoyan96/dsh-niulai.git"
+  },
+  "homepage": "https://github.com/luoyan96/dsh-niulai#readme",
+  "bugs": { "url": "https://github.com/luoyan96/dsh-niulai/issues" },
+  "dependencies": {
+    "@deepseek-ai/dsh-session": "0.1.0-rc.6",
+    "@deepseek-ai/dsh-settings": "0.1.0-rc.6"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@linxin666/dsh-client-ui-aionui-panel": "0.1.12",
+    "@linxin666/dsh-client-ui-git-graph": "0.1.12",
+    "@linxin666/dsh-client-ui-task-board": "0.1.12",
+    "@linxin666/dsh-client-ui-web-ui-settings": "0.1.12",
+    "@linxin666/dsh-live-stats": "0.1.12",
+    "@types/node": "^22.20.0",
+    "lightningcss": "^1.32.0",
+    "tsdown": "^0.22.2",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8",
+    "jsdom": "29.1.1"
+  },
+  "files": [
+    "lib", "huabao.png", "cordis.patch.yml", "skin.json", "README.md",
+    "LICENSE", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES"
+  ],
+  "scripts": {
+    "assets": "node scripts/embed-assets.mjs",
+    "build": "pnpm run assets && tsdown",
+    "prepare": "pnpm run build",
+    "pretypecheck": "pnpm run assets",
+    "typecheck": "tsc --noEmit",
+    "pretest": "pnpm run assets",
+    "test": "vitest run",
+    "pack:check": "pnpm pack --dry-run"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "niulai",
+  "name": "牛来",
+  "nameEn": "Niulai",
+  "author": "luo",
+  "tagline": "半透明田野主题，为 DSH Web 提供轻盈的专注界面",
+  "description": "面向 DSH Web UI 的独立主题皮肤：以奶油、麦田与柔和绿意为视觉基调，使用 DSH token 驱动配色。",
+  "tags": ["theme", "pasture", "cream", "translucent", "dsh"],
+  "accent": "#4d7a49",
+  "bodyAttr": "data-dsh-niulai",
+  "package": "dsh-niulai",
+  "repository": "https://github.com/luoyan96/dsh-niulai",
+  "wiring": { "id": "ui-skin-niulai", "bundleWired": false },
+  "order": 12
+}
