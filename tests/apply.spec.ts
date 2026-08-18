@@ -80,6 +80,7 @@ describe('Niulai skin', () => {
     if (textarea !== null) textarea.getBoundingClientRect = () => ({ x: 100, y: 300, top: 300, right: 760, bottom: 390, left: 100, width: 660, height: 90, toJSON: () => ({}) })
     const dispose = applySkin(); await Promise.resolve()
     expect(document.querySelectorAll('button[data-niulai-theme]')).toHaveLength(3)
+    expect(Array.from(document.querySelectorAll('button[data-niulai-theme]')).map(button => button.textContent)).toEqual(['花豹', '牛来', '牛来妈'])
     document.querySelector<HTMLButtonElement>('[data-niulai-theme="niulai"]')?.click()
     expect(document.body.style.getPropertyValue('--niulai-art')).toContain('data:image/png;base64')
     expect(document.querySelector<HTMLImageElement>('[data-niulai-companion] img')?.src).toContain('data:image/png;base64')
@@ -95,6 +96,7 @@ describe('Niulai skin', () => {
     const dispose = applySkin(); await flush()
     const companion = document.querySelector<HTMLButtonElement>('[data-niulai-companion]')
     if (companion === null) throw new Error('missing companion')
+    expect(companion.querySelector('img')?.draggable).toBe(false)
     companion.setPointerCapture = vi.fn(); companion.hasPointerCapture = vi.fn(() => true); companion.releasePointerCapture = vi.fn()
     companion.getBoundingClientRect = () => {
       const left = Number.parseInt(companion.style.left || '738', 10)
@@ -113,6 +115,8 @@ describe('Niulai skin', () => {
     expect(companion.style.left).toBe('798px')
     expect(companion.style.top).toBe('334px')
     expect(window.localStorage.getItem('dsh-niulai-companion-position')).toContain('798')
+    const nativeDrag = new Event('dragstart', { bubbles: true, cancelable: true })
+    expect(companion.querySelector('img')?.dispatchEvent(nativeDrag)).toBe(false)
     dispose()
   })
 

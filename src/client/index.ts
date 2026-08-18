@@ -42,9 +42,9 @@ function hostOverlayIsOpen(): boolean {
 }
 
 const THEMES: ReadonlyArray<{ id: ThemeId, label: string }> = [
-  { id: 'huabao', label: '花豹原野' },
-  { id: 'niulai', label: '牛来晴野' },
-  { id: 'niulaima', label: '牛来暮野' },
+  { id: 'huabao', label: '花豹' },
+  { id: 'niulai', label: '牛来' },
+  { id: 'niulaima', label: '牛来妈' },
 ]
 
 function mountSettingsControl(onTheme: (theme: ThemeId) => void): HTMLElement | undefined {
@@ -122,6 +122,7 @@ export function apply(ctx: Context): void {
   companion.setAttribute('aria-label', '拖动牛来宠物')
   const companionImage = document.createElement('img')
   companionImage.alt = ''
+  companionImage.draggable = false
   companionImage.setAttribute('aria-hidden', 'true')
   companion.append(companionImage)
   body.append(companion)
@@ -135,6 +136,8 @@ export function apply(ctx: Context): void {
   }
   const onPointerDown = (event: PointerEvent): void => {
     if (event.button !== 0) return
+    event.preventDefault()
+    event.stopPropagation()
     const rect = companion.getBoundingClientRect()
     dragStart = { x: event.clientX, y: event.clientY, left: rect.left, top: rect.top }
     companion.setPointerCapture(event.pointerId)
@@ -150,9 +153,11 @@ export function apply(ctx: Context): void {
     dragStart = undefined
     if (companion.hasPointerCapture(event.pointerId)) companion.releasePointerCapture(event.pointerId)
   }
+  const onDragStart = (event: DragEvent): void => event.preventDefault()
   companion.addEventListener('pointerdown', onPointerDown)
   companion.addEventListener('pointermove', onPointerMove)
   companion.addEventListener('pointerup', onPointerUp)
+  companion.addEventListener('dragstart', onDragStart)
 
   const positionCompanion = (): void => {
     const composer = findComposer()
@@ -199,7 +204,7 @@ export function apply(ctx: Context): void {
   const stopClients = detectSidebarWithoutActivation(ctx)
 
   ctx.effect(() => () => {
-    stopClients(); observer.disconnect(); window.removeEventListener('resize', onResize); if (companionFrame !== undefined) window.cancelAnimationFrame(companionFrame); control?.remove(); companion.removeEventListener('pointerdown', onPointerDown); companion.removeEventListener('pointermove', onPointerMove); companion.removeEventListener('pointerup', onPointerUp); companion.remove()
+    stopClients(); observer.disconnect(); window.removeEventListener('resize', onResize); if (companionFrame !== undefined) window.cancelAnimationFrame(companionFrame); control?.remove(); companion.removeEventListener('pointerdown', onPointerDown); companion.removeEventListener('pointermove', onPointerMove); companion.removeEventListener('pointerup', onPointerUp); companion.removeEventListener('dragstart', onDragStart); companion.remove()
     const restore = (name: string, value: string | null) => value === null ? body.removeAttribute(name) : body.setAttribute(name, value)
     restore('data-dsh-niulai', original.skin); restore('data-niulai-theme', original.theme); restore('data-niulai-better-sidebar', original.sidebar)
     restore('data-niulai-overlay-open', original.overlay); restore('data-niulai-settings-open', original.settings); restore('data-niulai-narrow', original.narrow)

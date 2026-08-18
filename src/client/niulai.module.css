@@ -8,8 +8,9 @@ body[data-dsh-niulai]::before {
   content: "";
   pointer-events: none;
   background: 70% 50% / min(760px, 50vw) auto no-repeat var(--niulai-art);
-  opacity: .12;
-  filter: saturate(.9) contrast(.96);
+  opacity: .22;
+  filter: saturate(1.05) contrast(1.05);
+  mix-blend-mode: multiply;
 }
 
 body[data-dsh-niulai] #root { position: relative; z-index: 0; }
